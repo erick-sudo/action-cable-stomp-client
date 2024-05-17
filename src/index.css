@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.vertical-scrollbar {
+  overflow-y: scroll;
+}
+
+.horizontal-scrollbar {
+  overflow-x: scroll;
+}
+
+.vertical-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar-thumb,
+.vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(31, 41, 55);
+}

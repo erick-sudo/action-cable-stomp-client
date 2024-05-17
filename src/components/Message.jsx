@@ -1,11 +1,25 @@
+import clsx from "clsx";
 import dayjs from "dayjs";
 import React from "react";
 
-function Message({ message }) {
+function Message({ message, currentUser, className }) {
   return (
-    <div className="px-4 pt-2 bg-white shadow rounded-lg">
-      <div>{message.text}</div>
-      <div className="text-xs font-mono font-bold text-gray-500 flex justify-end">{dayjs(message.created_at).format("h:mm A, DD/MM/YYYY")}</div>
+    <div
+      className={clsx(`${className} flex`, {
+        "justify-end": currentUser.id === message.user_id,
+      })}
+    >
+      <div
+        className={clsx(`px-8 pt-2 shadow max-w-[85%] ${className}`, {
+          "rounded-tl-xl rounded-br-[30px] rounded-bl-xl bg-white": currentUser.id === message.user_id,
+          "rounded-bl-[30px] rounded-br-xl rounded-tr-xl bg-gray-800 text-white": currentUser.id !== message.user_id,
+        })}
+      >
+        <div className="pb-2">{message.text}</div>
+        <div className="text-xs font-mono font-bold flex justify-end">
+          {dayjs(message.created_at).format("h:mm A, DD/MM/YYYY")}
+        </div>
+      </div>
     </div>
   );
 }

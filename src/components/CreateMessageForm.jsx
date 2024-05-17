@@ -1,7 +1,12 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import React, { useState } from "react";
 
-function CreateMessageForm({ className, onSubmit, conversation_id }) {
+function CreateMessageForm({
+  className,
+  onSubmit,
+  conversation_id,
+  currentUser,
+}) {
   const [text, setText] = useState("");
 
   const handleSubmit = (e) => {
@@ -10,6 +15,7 @@ function CreateMessageForm({ className, onSubmit, conversation_id }) {
       message: {
         text,
         conversation_id,
+        user_id: currentUser.id,
       },
     });
     setText("");
