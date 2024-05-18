@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import dayjs from "dayjs";
 import React from "react";
+import ToolTip from "./ToolTip";
 
 function Message({ message, currentUser, className }) {
   return (
@@ -9,17 +10,23 @@ function Message({ message, currentUser, className }) {
         "justify-end": currentUser.id === message.user_id,
       })}
     >
-      <div
-        className={clsx(`px-8 pt-2 shadow max-w-[85%] ${className}`, {
-          "rounded-tl-xl rounded-br-[30px] rounded-bl-xl bg-white": currentUser.id === message.user_id,
-          "rounded-bl-[30px] rounded-br-xl rounded-tr-xl bg-gray-800 text-white": currentUser.id !== message.user_id,
+      <ToolTip
+        pointerPosition={`${
+          currentUser.id === message.user_id ? "right" : "left"
+        }`}
+        bg={`${currentUser.id === message.user_id ? "white" : "rgb(31 41 55)"}`}
+        className={clsx("", {
+          "": currentUser.id === message.user_id,
+          "text-white": currentUser.id !== message.user_id,
         })}
       >
-        <div className="pb-2">{message.text}</div>
-        <div className="text-xs font-mono font-bold flex justify-end">
-          {dayjs(message.created_at).format("h:mm A, DD/MM/YYYY")}
+        <div className={clsx(`px-3 pt-2 pb-1 ${className}`)}>
+          <div className="pb-2">{message.text}</div>
+          <div className="text-xs font-mono font-bold flex justify-end">
+            {dayjs(message.created_at).format("h:mm A, DD/MM/YYYY")}
+          </div>
         </div>
-      </div>
+      </ToolTip>
     </div>
   );
 }

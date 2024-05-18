@@ -2,6 +2,7 @@ import React from "react";
 import ConversationListItem from "./ConversationListItem";
 
 function ConversationList({
+  setActiveTab,
   currentUser,
   className,
   conversations,
@@ -13,7 +14,10 @@ function ConversationList({
       {conversations.map((conversation, idx) => (
         <ConversationListItem
           currentUser={currentUser}
-          onClick={() => setActiveConversation(conversation)}
+          onClick={() => {
+            setActiveConversation(conversation);
+            setActiveTab("conversation-screen");
+          }}
           conversation={conversation}
           className={`${
             activeConversation?.id === conversation.id && "bg-black/10"

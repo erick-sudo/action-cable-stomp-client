@@ -7,11 +7,17 @@ import { EllipsisVerticalIcon } from "@heroicons/react/16/solid";
 import CreateMessageForm from "./components/CreateMessageForm";
 import ConversationScreen from "./components/ConversationScreen";
 import LoginForm from "./components/LoginForm";
+import { useMediaQuery, useTheme } from "@mui/material";
+import clsx from "clsx";
+import { ArrowLongLeftIcon } from "@heroicons/react/24/outline";
 
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
 
 function App() {
+  const [activeTab, setActiveTab] = useState("conversation-screen");
+  const theme = useTheme();
+  const isMdOrLarger = useMediaQuery(theme.breakpoints.up("md"));
   const WS_URL = "ws://192.168.100.14:3000/cable";
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -27,7 +33,12 @@ function App() {
       });
 
     if (Array.isArray(response)) {
-      setConversations(response);
+      setConversations(
+        response.map((c) => ({
+          ...c,
+          messages: c.messages.map((m) => ({ ...m, viewed: true })),
+        }))
+      );
 
       // Subscribe to the MessagesChannel for each conversation
       response.forEach((conversation) => {
@@ -76,12 +87,6 @@ function App() {
     share: true,
     onOpen: () => {
       console.log("Web socket connected");
-      sendMessage(
-        JSON.stringify({
-          command: "subscribe",
-          identifier: JSON.stringify({ channel: "ConversationsChannel" }),
-        })
-      );
     },
     onError: (error) => {
       console.log("WEB-SOCKET ERROR: " + error);
@@ -98,10 +103,20 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && readyState === 1) {
       fetchConversations();
+      subscribeUserToTheConversationsChannel();
     }
-  }, [currentUser]);
+  }, [currentUser, readyState]);
+
+  const subscribeUserToTheConversationsChannel = () => {
+    sendMessage(
+      JSON.stringify({
+        command: "subscribe",
+        identifier: JSON.stringify({ channel: "ConversationsChannel" }),
+      })
+    );
+  };
 
   const subscribeToConversation = (conversationId) => {
     sendMessage(
@@ -115,16 +130,22 @@ function App() {
     );
   };
 
-  // useEffect(() => {
-  //   if (readyState === 1) {
-  //     sendMessage(
-  //       JSON.stringify({
-  //         command: "subscribe",
-  //         identifier: JSON.stringify({ channel: "MessagesChannel" }),
-  //       })
-  //     );
-  //   }
-  // }, [readyState]);
+  useEffect(() => {
+    if (activeConversation) {
+      setConversations((convs) =>
+        convs.map((conv) => {
+          if (conv.id === activeConversation.id) {
+            return {
+              ...conv,
+              messages: conv.messages.map((m) => ({ ...m, viewed: true })),
+            };
+          } else {
+            return conv;
+          }
+        })
+      );
+    }
+  }, [activeConversation]);
 
   useEffect(() => {
     if (lastMessage && lastMessage.data) {
@@ -149,6 +170,10 @@ function App() {
                     conv.messages.push(message);
                   }
                 }
+
+                if (activeConversation?.id === conv.id) {
+                  setActiveConversation(conv);
+                }
                 return conv;
               })
             );
@@ -162,27 +187,47 @@ function App() {
     <>
       {currentUser ? (
         <div className="fixed inset-0 flex bg-gray-100">
-          <div className="border-r min-w-[15rem]">
+          <div
+            className={clsx("", {
+              "min-w-[15rem] max-w-[15rem] border-r": isMdOrLarger,
+              "": !isMdOrLarger,
+              "flex flex-col flex-grow":
+                !isMdOrLarger && activeTab === "conversation-listings",
+              hidden: !isMdOrLarger && activeTab !== "conversation-listings",
+            })}
+          >
             <div className="border-b h-16 flex items-center">
               <h4 className="p-2 font-bold">{currentUser.name}</h4>
             </div>
             <ConversationList
+              setActiveTab={setActiveTab}
               currentUser={currentUser}
               activeConversation={activeConversation}
               setActiveConversation={setActiveConversation}
               conversations={conversations}
-              className=""
+              className="flex-grow vertical-scrollbar"
             />
           </div>
-          <div className="flex-grow flex flex-col border-r">
-            <div className="h-16 border-b flex items-center px-4">
-              {activeConversation && (
-                <div
-                  className={`flex items-center gap-2 px-2 hover:bg-black text-gray-700 hover:text-white duration-300 cursor-pointer`}
+          <div
+            className={clsx("flex-grow", {
+              "min-w-[15rem] flex flex-col border-r": isMdOrLarger,
+              "": !isMdOrLarger,
+              "flex flex-col flex-grow":
+                !isMdOrLarger && activeTab === "conversation-screen",
+              hidden: !isMdOrLarger && activeTab !== "conversation-screen",
+            })}
+          >
+            <div className="border-b flex items-center px-4 min-h-16">
+              {!isMdOrLarger && (
+                <button
+                  onClick={() => setActiveTab("conversation-listings")}
+                  className="flex items-center gap-2 text-black px-4 py-2 rounded-full hover:bg-text-800 duration-300"
                 >
-                  <div className="w-8 h-8 flex justify-center items-center border-4 border-gray-700 rounded-full font-semibold">
-                    {activeConversation.title?.slice(0, 1)}
-                  </div>
+                  <ArrowLongLeftIcon height={24} />
+                </button>
+              )}
+              {activeConversation && (
+                <div className={`flex items-center gap-2 px-2 text-gray-700`}>
                   <div>{activeConversation.title}</div>
                 </div>
               )}
@@ -195,7 +240,7 @@ function App() {
               <ConversationScreen
                 currentUser={currentUser}
                 conversation={activeConversation}
-                className="flex-grow vertical-scrollbar"
+                className="flex-grow vertical-scrollbar border-b mb-2"
               />
             ) : (
               <div className="flex-grow flex justify-center p-12">
@@ -208,6 +253,13 @@ function App() {
                     you'd like. Feel free to create new conversations, send
                     messages, and express yourself.
                   </p>
+                  <button
+                    onClick={() => setActiveTab("conversation-listings")}
+                    className="flex items-center gap-2 my-4 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 duration-300"
+                  >
+                    <ArrowLongLeftIcon height={24} />
+                    <span>Conversations</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -226,12 +278,12 @@ function App() {
               />
             )}
           </div>
-          <div className="hidden md:block w-56 lg:w-[20rem] xl:w-[30rem]"></div>
+          <div className="hidden lg:block w-56 lg:w-[20rem] xl:w-[30rem]"></div>
         </div>
       ) : (
         <div className="fixed inset-0 bg-gray-100 flex items-center">
           <div className="container mx-auto p-4">
-            <div className="max-w-lg min-w-[25rem] bg-white shadow py-12 px-6">
+            <div className="max-w-lg min-w-[20rem] bg-white shadow py-12 px-6">
               <h4 className="font-extrabold text-lg my-2">Login to HIVE</h4>
               <LoginForm onSubmit={handleLogin} />
             </div>
@@ -280,5 +332,11 @@ export default App;
 //     currentUser();
 //   }, []);
 
-//   return <div></div>;
+//   return (
+//     <div className="">
+//       <ToolTip pointerPosition="" bg="rgb(0 0 0 / 70%)">
+
+//       </ToolTip>
+//     </div>
+//   );
 // }
