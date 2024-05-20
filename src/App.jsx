@@ -189,14 +189,14 @@ function App() {
         <div className="fixed inset-0 flex bg-gray-100">
           <div
             className={clsx("", {
-              "min-w-[15rem] max-w-[15rem] border-r": isMdOrLarger,
+              "min-w-[15rem] max-w-[15rem] border-r flex flex-col": isMdOrLarger,
               "": !isMdOrLarger,
               "flex flex-col flex-grow":
                 !isMdOrLarger && activeTab === "conversation-listings",
               hidden: !isMdOrLarger && activeTab !== "conversation-listings",
             })}
           >
-            <div className="border-b h-16 flex items-center">
+            <div className="border-b min-h-16 max-h-16 flex items-center">
               <h4 className="p-2 font-bold">{currentUser.name}</h4>
             </div>
             <ConversationList
