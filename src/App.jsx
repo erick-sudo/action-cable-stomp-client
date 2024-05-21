@@ -13,19 +13,22 @@ import { ArrowLongLeftIcon } from "@heroicons/react/24/outline";
 
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
+const serverDomain = import.meta.env.VITE_SERVER_DOMAIN;
+const httpUrl = `http://${serverDomain}`;
+const wsUrl = `ws://${serverDomain}`;
 
 function App() {
   const [activeTab, setActiveTab] = useState("conversation-screen");
   const theme = useTheme();
   const isMdOrLarger = useMediaQuery(theme.breakpoints.up("md"));
-  const WS_URL = "ws://192.168.100.14:3000/cable";
+  const WS_URL = `${wsUrl}/cable`;
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
   const fetchConversations = async function () {
     const response = await axios
-      .get("http://192.168.100.14:3000/conversations")
+      .get(`${httpUrl}/conversations`)
       .then((res) => res.data)
       .catch((axiosError) => {
         console.log("AXIOS ERROR: " + axiosError);
@@ -48,8 +51,9 @@ function App() {
   };
 
   const handleLogin = async function (payload) {
+    console.log(payload)
     const response = await axios
-      .post("http://192.168.100.14:3000/login", payload)
+      .post(`${httpUrl}/login`, payload)
       .then((res) => res.data)
       .catch((axiosError) => {
         console.log("AXIOS ERROR: " + axiosError);
@@ -63,7 +67,7 @@ function App() {
 
   const fetchCurrentLoggedInUser = async function () {
     const response = await axios
-      .get("http://192.168.100.14:3000/current-user")
+      .get(`${httpUrl}/current-user`)
       .then((res) => res.data)
       .catch((axiosError) => {
         console.log("AXIOS ERROR: " + axiosError);
@@ -76,11 +80,11 @@ function App() {
   };
 
   const publishNewConversation = (newConversation) => {
-    axios.post("http://192.168.100.14:3000/conversations", newConversation);
+    axios.post(`${httpUrl}/conversations`, newConversation);
   };
 
   const publishNewMessage = (newMessage) => {
-    axios.post("http://192.168.100.14:3000/messages", newMessage);
+    axios.post(`${httpUrl}/messages`, newMessage);
   };
 
   const { lastMessage, sendMessage, readyState } = useWebSocket(WS_URL, {
@@ -189,7 +193,8 @@ function App() {
         <div className="fixed inset-0 flex bg-gray-100">
           <div
             className={clsx("", {
-              "min-w-[15rem] max-w-[15rem] border-r flex flex-col": isMdOrLarger,
+              "min-w-[15rem] max-w-[15rem] border-r flex flex-col":
+                isMdOrLarger,
               "": !isMdOrLarger,
               "flex flex-col flex-grow":
                 !isMdOrLarger && activeTab === "conversation-listings",
@@ -298,7 +303,7 @@ export default App;
 
 // export default function App() {
 //   const login = function () {
-//     fetch("http://192.168.100.14:3000/login", {
+//     fetch(`${httpUrl}/login",`{
 //       method: "POST",
 //       credentials: "include",
 //       headers: {
@@ -317,7 +322,7 @@ export default App;
 //   };
 
 //   const currentUser = function () {
-//     fetch("http://192.168.100.14:3000/current-user", {
+//     fetch(`${httpUrl}/current-user",`{
 //       method: "GET",
 //       credentials: "include",
 //     }).then((response) => {
